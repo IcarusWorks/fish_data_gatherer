@@ -2,7 +2,8 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
-config :fish_scrapper, report_url: "https://anrweb.vt.gov/FWD/FW/FishingRegs.aspx?ID="
+config :fish_scrapper, waterbody_url: "https://anrweb.vt.gov/FWD/FW/FishingRegs.aspx?ID="
+config :fish_scrapper, access_area_url: "https://anrweb.vt.gov/FWD/FW/FishingAccessAreas.aspx?AccessArea="
 
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this
