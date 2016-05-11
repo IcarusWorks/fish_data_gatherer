@@ -1,8 +1,9 @@
 defmodule FishScrapper do
-  def get_data do
+  # max is 524
+  def fetch(limit \\ 524) do
     HTTPoison.start
 
-    Enum.to_list(1..524)
+    Enum.to_list(1..limit)
     |> Enum.map(&(Task.async(fn ->
       &1
       |> make_url
@@ -34,6 +35,10 @@ defmodule FishScrapper do
     <> read_special(body) <> "\n"
     <> read_general(body) <> "\n"
     <> read_ice_fishing(body)
+  end
+
+  def extract_data(_) do
+    ""
   end
 
   def read_caption(body) do
