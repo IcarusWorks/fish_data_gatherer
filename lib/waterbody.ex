@@ -82,7 +82,7 @@ defmodule Waterbody do
 
   defp parse_general(map, body) do
     parse_headers(body, "#ctl00_ContentPlaceHolder1_gvGeneralRegulations")
-    |> parse_ice_fishing(map, body)
+    |> parse_general(map, body)
   end
 
   defp parse_general(headers, map, body) do
@@ -135,7 +135,7 @@ defmodule Waterbody do
         {key, value}
       end
     end)
-    |> Enum.at(0)
+    |> List.first
   end
 
   defp create_map(values, headers, map) do
