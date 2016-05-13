@@ -2,10 +2,10 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
-config :fish_scrapper, waterbody_url: "https://anrweb.vt.gov/FWD/FW/FishingRegs.aspx?ID="
-config :fish_scrapper, waterbody_limit: 524
-config :fish_scrapper, access_area_url: "https://anrweb.vt.gov/FWD/FW/FishingAccessAreas.aspx?AccessArea="
-config :fish_scrapper, access_area_limit: 200
+config :fish_data_gatherer, waterbody_url: "https://anrweb.vt.gov/FWD/FW/FishingRegs.aspx?ID="
+config :fish_data_gatherer, waterbody_limit: 524
+config :fish_data_gatherer, access_area_url: "https://anrweb.vt.gov/FWD/FW/FishingAccessAreas.aspx?AccessArea="
+config :fish_data_gatherer, access_area_limit: 200
 
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this
@@ -15,11 +15,11 @@ config :fish_scrapper, access_area_limit: 200
 
 # You can configure for your application as:
 #
-#     config :fish_scrapper, key: :value
+#     config :fish_data_gatherer, key: :value
 #
 # And access this configuration in your application as:
 #
-#     Application.get_env(:fish_scrapper, :key)
+#     Application.get_env(:fish_data_gatherer, :key)
 #
 # Or configure a 3rd-party app:
 #

@@ -1,4 +1,4 @@
-# FishScrapper
+# FishDataGatherer
 
 **TODO: Add description**
 
@@ -6,15 +6,15 @@
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed as:
 
-  1. Add fish_scrapper to your list of dependencies in `mix.exs`:
+  1. Add fish_data_gatherer to your list of dependencies in `mix.exs`:
 
         def deps do
-          [{:fish_scrapper, "~> 0.0.1"}]
+          [{:fish_data_gatherer, "~> 0.0.1"}]
         end
 
-  2. Ensure fish_scrapper is started before your application:
+  2. Ensure fish_data_gatherer is started before your application:
 
         def application do
-          [applications: [:fish_scrapper]]
+          [applications: [:fish_data_gatherer]]
         end
 
