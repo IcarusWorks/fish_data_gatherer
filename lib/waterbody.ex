@@ -7,12 +7,6 @@ defmodule Waterbody do
   Gets the HTML document
 
   Returns a list of maps with nested maps.
-
-  ## Examples
-
-  iex> MyApp.Hello.world(:john)
-  :ok
-
   """
 
   def fetch(id) do
@@ -23,6 +17,19 @@ defmodule Waterbody do
     |> case do
       {:ok, body} -> parse(body)
       {:error, message} -> IO.puts message
+    end
+  end
+
+  # Find header and continue down the parsing chain if found
+  def parse(body) do
+    body
+    |> Floki.find("#ctl00_ContentPlaceHolder1_gvDetails caption")
+    |> case do
+      [] -> IO.puts "No header"
+      captured ->
+        captured
+        |> Floki.text
+        |> parse(body)
     end
   end
 
@@ -39,19 +46,6 @@ defmodule Waterbody do
     end
   end
 
-  # Find header and continue down the parsing chain if found
-  defp parse(body) do
-    body
-    |> Floki.find("#ctl00_ContentPlaceHolder1_gvDetails caption")
-    |> case do
-      [] -> IO.puts "No header"
-      captured ->
-        captured
-        |> Floki.text
-        |> parse(body)
-    end
-  end
-
   defp parse(name, body) do
     Floki.find(body, "#ctl00_ContentPlaceHolder1_gvDetails th")
     |> case do
@@ -64,39 +58,13 @@ defmodule Waterbody do
   end
 
   defp parse(headers, name, body) do
-    Floki.find(body, "#ctl00_ContentPlaceHolder1_gvDetails tr")
-    |> Enum.map(&(Floki.find(&1, "td")))
-    |> Enum.map(fn(x) ->
-      Enum.map(x, &Floki.text/1)
-    end)
-    |> parse(headers, name, body)
-  end
-
-  defp parse(values, headers, name, body) do
-    values
-    |> Enum.filter(fn(x) -> !Enum.empty?(x) end)
-    |> Enum.map(fn(row) ->
-      row
-      |> Enum.with_index
-      |> Enum.reduce(%{}, fn({value, index}, map) ->
-        label = Enum.at(headers, index)
-          |> underscore
-          |> String.to_atom
-        value = String.strip(value)
-        Map.put(map, label, value)
-      end)
-      |> Map.put(:name, name)
-      |> parse_special(body)
-    end)
-    |> List.flatten
+    parse_table(body, "#ctl00_ContentPlaceHolder1_gvDetails")
+    |> create_map(headers, name)
+    |> parse_special(body)
   end
 
   defp parse_special(map, body) do
-    Floki.find(body, "#ctl00_ContentPlaceHolder1_gvSpecialRegulations tr")
-    |> Enum.map(&(Floki.find(&1, "td")))
-    |> Enum.map(fn(x) ->
-      Enum.map(x, &Floki.text/1)
-    end)
+    parse_table(body, "#ctl00_ContentPlaceHolder1_gvSpecialRegulations")
     |> parse_special(map, body)
   end
 
@@ -109,97 +77,85 @@ defmodule Waterbody do
     map = Map.put(map, :special_regulations, value)
 
     parse_general(map, body)
-    |> Enum.into(parse_ice_fishing(map, body))
+    |> Enum.concat(parse_ice_fishing(map, body))
   end
 
   defp parse_general(map, body) do
-    Floki.find(body, "#ctl00_ContentPlaceHolder1_gvGeneralRegulations th")
-    |> case do
-      [] -> map
-      captured ->
-        captured
-        |> Enum.map(&Floki.text/1)
-        |> parse_general(map, body)
-    end
+    parse_headers(body, "#ctl00_ContentPlaceHolder1_gvGeneralRegulations")
+    |> parse_ice_fishing(map, body)
   end
 
   defp parse_general(headers, map, body) do
-    Floki.find(body, "#ctl00_ContentPlaceHolder1_gvGeneralRegulations tr")
-    |> Enum.map(&(Floki.find(&1, "td")))
-    |> Enum.map(fn(x) ->
-      Enum.map(x, &Floki.text/1)
-    end)
-    |> parse_general(headers, map, body)
-  end
-
-  defp parse_general(values, headers, map, _body) do
-    values
-    |> Enum.filter(fn(x) -> !Enum.empty?(x) end)
-    |> Enum.map(fn(row) ->
-      row
-      |> Enum.with_index
-      |> Enum.reduce(%{}, fn({value, index}, map) ->
-        label = Enum.at(headers, index)
-          |> underscore
-          |> String.to_atom
-        value = String.strip(value)
-
-        if label == :species do
-          label = :fish
-          value = find_or_create_fish(value)
-        end
-
-        Map.put(map, label, value)
-      end)
-      |> Map.put(:waterbody, map)
-    end)
+    parse_table(body, "#ctl00_ContentPlaceHolder1_gvGeneralRegulations")
+    |> create_map(headers, map)
   end
 
   defp parse_ice_fishing(map, body) do
-    Floki.find(body, "#ctl00_ContentPlaceHolder1_gvIceRegs th")
-    |> case do
-      [] -> []
-      captured ->
-        captured
-        |> Enum.map(&Floki.text/1)
-        |> parse_ice_fishing(map, body)
-    end
+    parse_headers(body, "#ctl00_ContentPlaceHolder1_gvIceRegs")
+    |> parse_ice_fishing(map, body)
   end
 
   defp parse_ice_fishing(headers, map, body) do
-    Floki.find(body, "#ctl00_ContentPlaceHolder1_gvIceRegs tr")
+    parse_table(body, "#ctl00_ContentPlaceHolder1_gvIceRegs")
+    |> create_map(headers, map)
+  end
+
+  defp find_or_create_fish(value) do
+    %{name: value}
+  end
+
+  defp parse_headers(body, id) do
+    headers_content = Floki.find(body, "#{id} th")
+    for h <- headers_content, do: Floki.text(h)
+  end
+
+  defp parse_table(body, id) do
+    Floki.find(body, "#{id} tr")
     |> Enum.map(&(Floki.find(&1, "td")))
     |> Enum.map(fn(x) ->
       Enum.map(x, &Floki.text/1)
     end)
-    |> parse_ice_fishing(headers, map, body)
   end
 
-  defp parse_ice_fishing(values, headers, map, _body) do
+  defp create_map(values, headers, name) when is_binary(name) do
     values
     |> Enum.filter(fn(x) -> !Enum.empty?(x) end)
     |> Enum.map(fn(row) ->
-      row
-      |> Enum.with_index
-      |> Enum.reduce(%{}, fn({value, index}, map) ->
-        label = Enum.at(headers, index)
+      for {v, vi} <- Enum.with_index(row), {h, hi} <- Enum.with_index(headers), vi == hi, into: %{name: name} do
+        key = h
           |> underscore
           |> String.to_atom
-        value = String.strip(value)
+        value = String.strip(v)
 
-        if label == :species do
-          label = :fish
+        if key == :species do
+          key = :fish
           value = find_or_create_fish(value)
         end
 
-        Map.put(map, label, value)
-      end)
-      |> Map.put(:waterbody, map)
+        {key, value}
+      end
     end)
+    |> Enum.at(0)
   end
 
-  def find_or_create_fish(value) do
-    %{name: value}
+  defp create_map(values, headers, map) do
+    values
+    |> Enum.filter(fn(x) -> !Enum.empty?(x) end)
+    |> Enum.map(fn(row) ->
+      for {v, vi} <- Enum.with_index(row), {h, hi} <- Enum.with_index(headers), vi == hi, into: %{waterbody: map} do
+        key = h
+          |> underscore
+          |> String.to_atom
+        value = String.strip(v)
+
+        if key == :species do
+          key = :fish
+          value = find_or_create_fish(value)
+        end
+
+        {key, value}
+      end
+    end)
   end
 
   defp underscore(string) do
