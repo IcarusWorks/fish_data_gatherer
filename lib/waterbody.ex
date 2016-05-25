@@ -1,4 +1,4 @@
-defmodule Waterbody do
+defmodule FishDataGatherer.Waterbody do
   @moduledoc """
   Fetch table data from the Vermont Fish and Wildlife site waterbody
   """

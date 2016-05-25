@@ -1,6 +1,6 @@
 defmodule WaterbodyTest do
   use ExUnit.Case
-  doctest Waterbody
+  doctest FishDataGatherer.Waterbody
 
   @expected_response [
     %{daily_limit: "0", fish: %{name: "Anadromous Atlantic Salmon"}, legal_method: "NA", length: "NA", season: "No open season",
@@ -73,6 +73,6 @@ defmodule WaterbodyTest do
 
   test "parse/1 correctly parses an html body" do
     {:ok, body} = File.read("test/data/waterbody_html.txt")
-    assert Waterbody.parse(Macro.unescape_string(body)) == @expected_response
+    assert FishDataGatherer.Waterbody.parse(Macro.unescape_string(body)) == @expected_response
   end
 end
